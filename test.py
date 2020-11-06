@@ -11,7 +11,7 @@ import pandas as pd
 # cho chạy i in 1 ->100
 #   Đọc từ [i:] nếu int thì random int, tương tự với float   
 columns = []
-for i in range(1, 101, 1 ):
+for i in range(1, 11, 1 ):
     'a: {}, b: {}, c: {}'.format(1, 2, 3)
     val = 'column_{}_{}'.format(i, random.choice(['int', 'float', 'char']))
     columns.append(val)
@@ -33,7 +33,9 @@ for i in range(2):
         row.append(tem)  
     data.append(row)
 
-df = pd.DataFrame(data, columns=columns)
+df = pd.DataFrame(data, columns=columns )
+print(print(df.columns.tolist()))
+print(df)
 
 with open("data_test.txt", "w") as text_file:
     text_file.write(df.to_string())
