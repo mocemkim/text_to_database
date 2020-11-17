@@ -1,0 +1,8 @@
+Đọc dữ liệu liệu từ text vào dataframe
+Kết nối với database
+Chuyển dữ liệu từ dataframe vào database automation
+	 - Tạo bảng
+		- Vậy chúng ta sẽ tạo bảng sao đây?, làm sao biết trường nào 
+		  là int, trường nào là double !!!, trường nào là char????
+		  Ok trog bài này mình sẽ giới thiệu với mọi người regex
+	-  Insert dữ liệu vào

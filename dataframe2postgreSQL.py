@@ -179,88 +179,96 @@ def write_frame(frame, name, con, flavor='postgresql', if_exists='replace', **kw
     cur.close()
     con.commit()
 
-
+# Thực thi câu lệnh insert
+# INSERT INTO table_name  ("column_1_int","column_2_char","column_3_float") VALUES ('877', 'abcd1234', '17.466'), ('877', 'abcd1234', '17.466')
 def _write_postgresql(frame, table, names, cur):
-
-    bracketed_names = ['"' + column + '"' for column in names]
-    col_names = ','.join(bracketed_names)
-
-    wildcards = ','.join([r'%s'] * len(names))
-    insert_query = 'INSERT INTO %s (%s) VALUES ' % (
-        table, col_names )
+    bracketed_names = ['"' + column +'"' for column in names]
+    col_names = ', '.join(bracketed_names)
+    insert_query = 'INSERT INTO %s (%s) VALUES' %(table, col_names)
     data = [tuple(x) for x in frame.values]
-    args_str = ','.join(list(map(lambda x: str(x), data)))
-    cur.execute(insert_query + args_str) 
-
-
-
-def get_sqltype(pytype, flavor):
-    sqltype = {'postgresql': 'VARCHAR (100)'}
-    # np.floating
-    if pytype == np.float:
-        sqltype['postgresql'] = 'double precision'
-    # np.integer    
-    if pytype == np.int:
-        sqltype['postgresql'] = 'INTEGER'    
+    args_str = ', '.join(list(map(lambda x:str(x), data)))
+    cur.execute(insert_query + args_str)
     
-    return sqltype[flavor]
 
-# đây
-def get_frame_dtypes(fist_row):
-    # số thực
-    float_re = '[-+]?\d*\.\d*$'
-    # số nguyên
-    int_re = '^[0-9]+$'
 
+# chuyển từ kiểu dữ liệu python sang
+# kiểu dữ liệu postgre
+def get_sqltype(pytype):
+    # string tới varchar(100)
+    # np.int tới INTEGER
+    # np.float tới DOUBLE PRECISION
+
+    if pytype=='np.float':
+        return 'DOUBLE PRECISION'
+    elif pytype == 'np.int':
+        return 'INTEGER'
+    else:
+        return 'VARCHAR(100)'
+    
+    pass
+
+
+#  Từ dữ liệu dòng đầu tiên chuyển về kiểu dữ liệu trong python
+def get_frame_dtypes(first_row):
+    # dùng regex bắt số thực với số nguyên = hàm re.search
+    # trả về danh sách kiểu dữ liệu python 
+    # +27.53 
+    float_re = '^[+-]?\d+\.\d+$'
+    # 172
+    int_re = '^[+-]?\d+'
+
+    # khởi tạo hết tất cả đều kiểu là object
+    # ghi đè lên 
     list_index_float = []
     list_index_int = []
-    
-    for i, item in enumerate(fist_row):
+
+    for i, item in enumerate(first_row):
         if re.search(float_re, item):
             list_index_float.append(i)
         elif re.search(int_re, item):
-            list_index_int.append(i) 
-    result = ['object' for i in range(195)]
-    for i in list_index_float:
-        result[i] = np.float
-    for i in list_index_int:
-        result[i] = np.int
-    return result                  
-
-
-def get_schema(frame, name, flavor, keys=None):
-    # cách mình cần làm là gì 
-    # Lấy dòng đầu trong data trong (get_data(data))
-    # Check các kiểu dữ liệu trong dòng đầu đó => lấy được danh sách datatype (get_data(data))
-    # Truyền qua get_schema
-    # chỗ thay đổi cấu trúc của bảng
-
-    # Lấy dòng đầu trong data trong (get_data(data))
-    first_row = list(frame.iloc[0,:].values)
-    # Check các kiểu dữ liệu trong dòng đầu đó => lấy được danh sách datatype (get_data(data))
-    frame_types = get_frame_dtypes(first_row)
-    # lấy được danh sách datatype get_data(data)
-    lookup_type = lambda dtype: get_sqltype(dtype, flavor)
-
-    # Replace spaces in DataFrame column names with _.
-
-    safe_columns = [s.replace(' ', '_').strip() for s in frame.dtypes.index]
-    print(frame.dtypes.index)
-    column_types = lzip(safe_columns, map(lookup_type, frame_types))
-
-    if flavor == 'postgresql':
-        columns = ',\n  '.join('%s %s' % x for x in column_types)
-
-    keystr = ''
-    if keys is not None:
-        keystr = ', PRIMARY KEY (%s)' % ','.join(keys)
+            list_index_int.append(i)
     
-    template = """CREATE TABLE %(name)s (
-                  %(columns)s
-                  %(keystr)s
-                  );"""
-    create_statement = template % {'name': name, 'columns': columns,
-                                   'keystr': keystr}
-    print(create_statement)                               
+    result = [ 'object' for i in range(len(first_row))]
+
+    for i in list_index_float:
+        result[i] = 'np.float'
+    for i in list_index_int:
+        result[i] = 'np.int'
+    
+    return result
+
+    pass
+                
+
+# thực thi câu lệnh tạo bảng
+# CREATE TABLE table_test (
+#                column_1_float double precision,
+#                column_2_char VARCHAR (100),
+#                   );
+def get_schema(frame, name, flavor, keys=None):
+    # param
+    # name là tên cái bảng
+    # frame chính là cái dataframe
+    
+    # chức năng 
+    # Lấy dòng đầu trong data trong (get_data(data))
+    # Check các kiểu dữ liệu trong dòng đầu đó => lấy được danh sách datatype bằng get_frame_dtypes
+    # chuyển danh sách datatype python sang postgre bằng get_sqltype
+    # tạo theo cấu trúc 
+
+    first_row = list(frame.iloc[0, :].values)
+    frame_types = get_frame_dtypes(first_row)
+
+    lookup_type = lambda dtype: get_sqltype(dtype)
+
+    # [('column 1', 'INTEGER')]
+    columns = lzip(frame.dtypes.index, map(lookup_type, frame_types))
+    columns = ', \n'.join(('%s %s' % x for x in columns))
+    template = """ CREATE TABLE %(name)s(
+                    %(columns)s
+    ); """
+    create_statement = template % {'name': name, 'columns': columns}
     return create_statement
+     
+
 

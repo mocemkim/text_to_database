@@ -6,37 +6,34 @@ import sys
 import os
 
 
-filename = os.path.join(str(os.getcwd()), 'data_test.txt') 
-print(filename)
-
-
-# Đọc từng dòng
-    # Tách theo tab, xóa những kí tự trống 
-    #   Nếu đủ 197 trường quăng vào chép vào dataframe 
-    #   Ngược lại quăng chép vào file rồi quăng ra
-
-# vấn đề là có những trường 199 cái chuỗi rỗng thì làm sao đây 
-# tìm điểm khác nhau giữa những dòng trống và những dòng đầy đủ một cái mà đơn
-# giản, tổng quát, và gọn nhẹ nhất
+# readline để dọc từng dòng
+# Ở mỗi dòng tách ra =, regex bắt số khoảng trắng không cố 
+# định ấy
 
 def get_dataframe(filename):
+    mul_space = '\s+'
     data = []
-    mul_space = '/\s/'
-    with open(filename,'r',encoding='utf-8') as file:
+    with open(filename, 'r', encoding='utf-8') as file:
         line = file.readline()
         while 1:
-            # Tách theo tab, xóa kí tự trống
-            line = re.split('\s+', line)
+            line = re.split(mul_space, line)
             data.append(line)
-            line = file.readline()   
-            if len(line) == 0:
-                break 
-    # columns[0], columns[-1] = ' '
-    columns = data[0][1:-1] 
-    tem_data = [data[1:-1][0][1:-1]]
+            line = file.readline()
+            if len(line)==0:
+                break
+    
+    # columns bỏ đi kí tự rỗng đầu tiên và cuối cùng
+    columns = data[0][1:-1]
+    # dòng ở giữa bỏ đi dòng index đầu tiên, và rỗng ở cuối
+    mid_data = [row[1:-1]for row in data[1:-1]]
+    # dòng cuối cùng chỉ cần bỏ cái index đầu tiên
     last_row = data[-1][1:]
-    tem_data.append(last_row)
-    data = tem_data
 
-    dataFrame  = pd.DataFrame(data, columns = columns)
+    mid_data.append(last_row)
+    data = mid_data
+    dataFrame = pd.DataFrame(data, columns = columns)
+    print(dataFrame)
+
+
+    
     return dataFrame

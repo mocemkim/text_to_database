@@ -11,7 +11,7 @@ import pandas as pd
 # cho chạy i in 1 ->100
 #   Đọc từ [i:] nếu int thì random int, tương tự với float   
 columns = []
-for i in range(1, 11, 1 ):
+for i in range(1, 201, 1 ):
     'a: {}, b: {}, c: {}'.format(1, 2, 3)
     val = 'column_{}_{}'.format(i, random.choice(['int', 'float', 'char']))
     columns.append(val)
